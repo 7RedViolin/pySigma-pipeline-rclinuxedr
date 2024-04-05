@@ -61,17 +61,28 @@ class InitiatedValueTransformation(DetectionItemTransformation):
 @Pipeline
 def RCLinuxEDR_pipeline() -> ProcessingPipeline:        # Processing pipelines should be defined as functions that return a ProcessingPipeline object.
 
-    os_filters = [
+    unsupported_os = [
         ProcessingItem(
             identifier="rclinuxedr_linux_os",
-            transformation=AddConditionTransformation({
-                "os_type":"linux"
-            }),
+            transformation=RuleFailureTransformation("Product type not yet supported by the RC LinuxEDR Sigma pipeline"),
+            rule_condition_negation=True,
             rule_conditions=[
                 LogsourceCondition(product="linux")
             ]
         )
     ]
+
+    event_type_translation_dict = {
+        "process_creation": {
+            "event_type_cd": "process_start"
+        },
+        "network_connection": {
+            "event_type_cd": "network_connection"
+        },
+        "firewall": {
+            "event_type_cd": "network_connection"
+        }
+    }
 
     translation_dict = {
         "ProcessId":"process_pid",
@@ -83,10 +94,8 @@ def RCLinuxEDR_pipeline() -> ProcessingPipeline:        # Processing pipelines s
         "md5":"process_md5",
         "sha256":"process_sha256",
         "ParentProcessId":"parent_process_pid",
-        "ParentImage":"parent_process_name",
+        "ParentImage":"parent_process_path_name",
         "ParentImagePath":"parent_process_path",
-        "DestinationHostname":"domain",
-        "Protocol": "protocol_cd",
         #?: "user_uid",
         #?: "login_user_uid",
         #?: "container_id",
@@ -94,6 +103,8 @@ def RCLinuxEDR_pipeline() -> ProcessingPipeline:        # Processing pipelines s
     }
 
     network_translation_dict = {
+        "DestinationHostname":"domain",
+        "Protocol": "protocol_cd",
         "IpAddress": ["local_ip", "remote_ip"],
         "DestinationPort":"dst_port",
         "DestinationIp":"dst_ip",
@@ -115,6 +126,17 @@ def RCLinuxEDR_pipeline() -> ProcessingPipeline:        # Processing pipelines s
 
     other_supported_fields = [
         "Initiated",
+    ]
+
+    event_type_filter = [
+        ProcessingItem(
+            identifier=f"rclinuxedr_{event_type}_mapping",
+            transformation=AddConditionTransformation(details),
+            rule_conditions=[
+                LogsourceCondition(category=event_type)
+            ]
+        )
+        for event_type, details in event_type_translation_dict.items()
     ]
 
     field_mappings = [
@@ -211,7 +233,7 @@ def RCLinuxEDR_pipeline() -> ProcessingPipeline:        # Processing pipelines s
         ProcessingItem(
             identifier="rclinuxedr_fail_rule_not_supported",
             rule_condition_linking=any,
-            transformation=RuleFailureTransformation("Rule type not yet supported by the RC Linux EDR Sigma pipeline"),
+            transformation=RuleFailureTransformation("Rule type not yet supported by the RC LinuxEDR Sigma pipeline"),
             rule_condition_negation=True,
             rule_conditions=[
                 RuleProcessingItemAppliedCondition("rclinuxedr_logsource")
@@ -236,8 +258,9 @@ def RCLinuxEDR_pipeline() -> ProcessingPipeline:        # Processing pipelines s
         allowed_backends=frozenset(),                                               # Set of identifiers of backends (from the backends mapping) that are allowed to use this processing pipeline. This can be used by frontends like Sigma CLI to warn the user about inappropriate usage.
         priority=50,            # The priority defines the order pipelines are applied. See documentation for common values.
         items=[
+            *unsupported_os,
             *unsupported_field_names,
-            *os_filters,
+            *event_type_filter,
             *field_mappings,
             *network_field_mappings,
             *change_logsource_info,
