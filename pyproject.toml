@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "pySigma-pipeline-rclinuxedr"
 version = "0.1.0"
-description = "pySigma rclinuxedr pipeline"
+description = "pySigma RC LinuxEDR pipeline"
 authors = ["Cori Smith <cs2718281@gmail.com>"]
 license = "MIT"
 repository = "https://github.com/7RedViolin/pySigma-pipeline-rclinuxedr"
