@@ -1,10 +1,8 @@
 from typing import Optional, Union
-from sigma.pipelines.common import logsource_windows, windows_logsource_mapping
 from sigma.pipelines.base import Pipeline
-from sigma.processing.transformations import AddConditionTransformation, FieldMappingTransformation, DetectionItemFailureTransformation, RuleFailureTransformation, SetStateTransformation, ChangeLogsourceTransformation, DetectionItemTransformation, FieldPrefixMappingTransformation, MapStringTransformation
-from sigma.processing.postprocessing import EmbedQueryTransformation
+from sigma.processing.transformations import AddConditionTransformation, FieldMappingTransformation, DetectionItemFailureTransformation, RuleFailureTransformation, ChangeLogsourceTransformation, DetectionItemTransformation, FieldPrefixMappingTransformation, MapStringTransformation
 from sigma.processing.conditions import LogsourceCondition, IncludeFieldCondition, ExcludeFieldCondition, RuleProcessingItemAppliedCondition, RuleContainsDetectionItemCondition
-from sigma.processing.pipeline import ProcessingItem, ProcessingPipeline, QueryPostprocessingItem
+from sigma.processing.pipeline import ProcessingItem, ProcessingPipeline
 from sigma.rule import SigmaDetectionItem, SigmaDetection
 from sigma.exceptions import SigmaTransformationError
 from sigma.types import SigmaString
@@ -86,7 +84,7 @@ def RCLinuxEDR_pipeline() -> ProcessingPipeline:        # Processing pipelines s
 
     translation_dict = {
         "ProcessId":"process_pid",
-        "Image":"process_path",
+        "Image":"process_name",
         "ImagePath":"process_path",
         "CommandLine":"process_command_line",
         "CurrentDirectory":"working_directory",
@@ -94,7 +92,7 @@ def RCLinuxEDR_pipeline() -> ProcessingPipeline:        # Processing pipelines s
         "md5":"process_md5",
         "sha256":"process_sha256",
         "ParentProcessId":"parent_process_pid",
-        "ParentImage":"parent_process_path_name",
+        "ParentImage":"parent_process_name",
         "ParentImagePath":"parent_process_path",
         #?: "user_uid",
         #?: "login_user_uid",
@@ -103,17 +101,20 @@ def RCLinuxEDR_pipeline() -> ProcessingPipeline:        # Processing pipelines s
     }
 
     network_translation_dict = {
-        "DestinationHostname":"domain",
+        "DestinationHostname":"dst_host",
         "Protocol": "protocol_cd",
         "IpAddress": ["local_ip", "remote_ip"],
         "DestinationPort":"dst_port",
         "DestinationIp":"dst_ip",
         "SourceIp":"src_ip",
         "SourcePort":"src_port",
+        "SrcIp": "src_ip",
+        "DstIp": "dst_ip",
         "SrcPort": "src_port",
         "DstPort": "dst_port",
         "DestinationIsIPv6": "dst_ip_type",
-        "SourceIsIPv6": "src_ip_type"
+        "SourceIsIPv6": "src_ip_type",
+        "SourceHostname": "src_host"
         #?: "remote_location_cd",
     }
 
@@ -122,6 +123,8 @@ def RCLinuxEDR_pipeline() -> ProcessingPipeline:        # Processing pipelines s
         "dst_ip": ["local_ip","remote_ip"],
         "src_port": ["local_port", "remote_port"],
         "dst_port":["local_port", "remote_port"],
+        "dst_host": ["domain", "host_name"],
+        "src_host": ["domain", "host_name"]
     }
 
     other_supported_fields = [
@@ -141,11 +144,13 @@ def RCLinuxEDR_pipeline() -> ProcessingPipeline:        # Processing pipelines s
 
     field_mappings = [
         ProcessingItem(
-            identifier="rclinuxedr_fieldmapping",
+            identifier="rclinuxedr_generic_fieldmapping",
             transformation=FieldMappingTransformation(translation_dict),
             rule_condition_linking=any,
             rule_conditions=[
-                LogsourceCondition(category="process_creation")
+                LogsourceCondition(category="process_creation"),
+                LogsourceCondition(category="network_connection"),
+                LogsourceCondition(category="firewall"),
             ]
         ),
     ]
@@ -168,6 +173,27 @@ def RCLinuxEDR_pipeline() -> ProcessingPipeline:        # Processing pipelines s
                 LogsourceCondition(category="firewall")
             ]
         ),
+
+        # Update host prefixes if outbound
+        ProcessingItem(
+            identifier="rclinuxedr_network_outbound_fieldmapping",
+            transformation=FieldMappingTransformation({"src_host": "host_name", "dst_host": "domain"}),
+            field_name_conditions=[IncludeFieldCondition(['src_host','dst_host'])],
+            rule_conditions=[
+                RuleContainsDetectionItemCondition(field="direction_cd", value="outbound")
+            ]
+        ),
+
+        # Update host prefixes if outbound
+        ProcessingItem(
+            identifier="rclinuxedr_network_outbound_fieldmapping",
+            transformation=FieldMappingTransformation({"src_host": "domain", "dst_host": "host_name"}),
+            field_name_conditions=[IncludeFieldCondition(['src_host','dst_host'])],
+            rule_conditions=[
+                RuleContainsDetectionItemCondition(field="direction_cd", value="inbound")
+            ]
+        ),
+
 
         # Update prefixes if outbound
         ProcessingItem(
@@ -213,7 +239,7 @@ def RCLinuxEDR_pipeline() -> ProcessingPipeline:        # Processing pipelines s
     ]
 
     change_logsource_info = [
-        # Add service to be CarbonBlackResponse for pretty much everything
+        # Add service to be RC LinuxEDR for pretty much everything
         ProcessingItem(
             identifier="rclinuxedr_logsource",
             transformation=ChangeLogsourceTransformation(

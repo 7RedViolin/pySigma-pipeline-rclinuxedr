@@ -69,9 +69,10 @@ def test_rclinuxedr_network_no_direction_mapping(test_backend : TextQueryTestBac
                     DstPort: destination_port_titleized_short
                     DestinationIsIPv6: destination_ip_type_here
                     SourceIsIPv6: source_ip_type_here
+                    SourceHostname: host_name_here
                 condition: sel
         """)
-    ) == ['event_type_cd="network_connection" and domain="domain_here" and protocol_cd="protocol_here" and (local_ip="ipaddress_value" or remote_ip="ipaddress_value") and (local_port="destination_port_titleized" or remote_port="destination_port_titleized") and (local_ip="destination_ip_titleized" or remote_ip="destination_ip_titleized") and (local_ip="source_ip_titleized" or remote_ip="source_ip_titleized") and (local_port="source_port_titleized" or remote_port="source_port_titleized") and (local_port="source_port_titleized_short" or remote_port="source_port_titleized_short") and (local_port="destination_port_titleized_short" or remote_port="destination_port_titleized_short") and dst_ip_type="destination_ip_type_here" and src_ip_type="source_ip_type_here"']
+    ) == ['event_type_cd:network_connection AND ((domain:domain_here OR host_name:domain_here) AND protocol_cd:protocol_here AND (local_ip:ipaddress_value OR remote_ip:ipaddress_value) AND (local_port:destination_port_titleized OR remote_port:destination_port_titleized) AND (local_ip:destination_ip_titleized OR remote_ip:destination_ip_titleized) AND (local_ip:source_ip_titleized OR remote_ip:source_ip_titleized) AND (local_port:source_port_titleized OR remote_port:source_port_titleized) AND (local_port:source_port_titleized_short OR remote_port:source_port_titleized_short) AND (local_port:destination_port_titleized_short OR remote_port:destination_port_titleized_short) AND dst_ip_type:destination_ip_type_here AND src_ip_type:source_ip_type_here AND (domain:host_name_here OR host_name:host_name_here))']
 
 def test_rclinuxedr_network_inbound_mapping(test_backend : TextQueryTestBackend):
     assert test_backend.convert(
@@ -95,9 +96,10 @@ def test_rclinuxedr_network_inbound_mapping(test_backend : TextQueryTestBackend)
                     DestinationIsIPv6: destination_ip_type_here
                     SourceIsIPv6: source_ip_type_here
                     Initiated: 'false'
+                    SourceHostname: host_name_here
                 condition: sel
         """)
-    ) == ['event_type_cd="network_connection" and domain="domain_here" and protocol_cd="protocol_here" and (local_ip="ipaddress_value" or remote_ip="ipaddress_value") and local_port="destination_port_titleized" and local_ip="destination_ip_titleized" and remote_ip="source_ip_titleized" and remote_port="source_port_titleized" and remote_port="source_port_titleized_short" and local_port="destination_port_titleized_short" and local_ip_type="destination_ip_type_here" and remote_ip_type="source_ip_type_here" and direction_cd="inbound"']
+    ) == ['event_type_cd:network_connection AND (host_name:domain_here AND protocol_cd:protocol_here AND (local_ip:ipaddress_value OR remote_ip:ipaddress_value) AND local_port:destination_port_titleized AND local_ip:destination_ip_titleized AND remote_ip:source_ip_titleized AND remote_port:source_port_titleized AND remote_port:source_port_titleized_short AND local_port:destination_port_titleized_short AND local_ip_type:destination_ip_type_here AND remote_ip_type:source_ip_type_here AND direction_cd:inbound AND domain:host_name_here)']
 
 def test_rclinuxedr_network_outbound_mapping(test_backend : TextQueryTestBackend):
     assert test_backend.convert(
@@ -121,9 +123,10 @@ def test_rclinuxedr_network_outbound_mapping(test_backend : TextQueryTestBackend
                     DestinationIsIPv6: destination_ip_type_here
                     SourceIsIPv6: source_ip_type_here
                     Initiated: 'true'
+                    SourceHostname: host_name_here
                 condition: sel
         """)
-    ) == ['event_type_cd="network_connection" and domain="domain_here" and protocol_cd="protocol_here" and (local_ip="ipaddress_value" or remote_ip="ipaddress_value") and remote_port="destination_port_titleized" and remote_ip="destination_ip_titleized" and local_ip="source_ip_titleized" and local_port="source_port_titleized" and local_port="source_port_titleized_short" and remote_port="destination_port_titleized_short" and remote_ip_type="destination_ip_type_here" and local_ip_type="source_ip_type_here" and direction_cd="outbound"']
+    ) == ['event_type_cd:network_connection AND (domain:domain_here AND protocol_cd:protocol_here AND (local_ip:ipaddress_value OR remote_ip:ipaddress_value) AND remote_port:destination_port_titleized AND remote_ip:destination_ip_titleized AND local_ip:source_ip_titleized AND local_port:source_port_titleized AND local_port:source_port_titleized_short AND remote_port:destination_port_titleized_short AND remote_ip_type:destination_ip_type_here AND local_ip_type:source_ip_type_here AND direction_cd:outbound AND host_name:host_name_here)']
 
 def test_rclinuxedr_unsupported_rule_type(test_backend : TextQueryTestBackend):
   with pytest.raises(ValueError):
