@@ -9,3 +9,88 @@ This is the RC LinuxEDR pipeline for pySigma. It contains the processing pipelin
 This pipeline is currently maintained by:
 
 * [Cori Smith](https://github.com/7RedViolin/)
+
+
+## Installation
+This can be installed via pip from PyPI or using pySigma's plugin functionality
+
+### PyPI
+```bash
+pip install pysigma-pipeline-rclinuxedr
+```
+
+### pySigma
+```python
+from sigma.plugins import SigmaPluginDirectory
+plugins = SigmaPluginDirectory.default_plugin_directory()
+plugins.get_plugin_by_id("rclinuxedr").install()
+```
+
+## Usage
+
+### sigma-cli
+```bash
+sigma convert -t rclinuxedr proc_creation_lnx_at_command.yml
+```
+
+### pySigma
+```python
+from sigma.backends.elasticsearch import LuceneBackend
+from sigma.pipelines.rclinuxedr import RCLinuxEDR_pipeline
+from sigma.rule import SigmaRule
+
+rule = SigmaRule.from_yaml("""
+title: Mimikatz CommandLine
+status: test
+logsource:
+    category: process_creation
+    product: linux
+detection:
+    sel:
+        CommandLine|contains: mimikatz
+    condition: sel""")
+
+
+backend = LuceneBackend(RCLinuxEDR_pipeline())
+print(backend.convert_rule(rule)[0])
+```
+
+## Side Notes & Limitations
+- Pipeline uses RC Linux EDR field names
+- Pipeline only supports `linux` product type
+- Pipeline supports the following category types for field mappings
+  - `process_creation`
+  - `network_connection`
+  - `firewall`
+- Pipeline supports the following fields:
+  - `CommandLine`
+  - `CurrentDirectory`
+  - `DestinationHostname`
+  - `DestinationIp`
+  - `DestinationgIsIPv6`
+  - `DestinationPort`
+  - `DstIP`
+  - `DstPort`
+  - `Initiated`
+  - `IpAddress`
+  - `ParentImage`
+  - `ParentImagePath`
+  - `ParentProcessId`
+  - `ProcessId`
+  - `Protocol`
+  - `SrcIp`
+  - `SrcPort`
+  - `SourceHostname`
+  - `SourceIp`
+  - `SourceIsIPv6`
+  - `SourcePort`
+  - `User`
+  - `dst_host`
+  - `dst_ip`
+  - `dst_port`
+  - `md5`
+  - `sha256`
+  - `src_host`
+  - `src_ip`
+  - `src_port`
+- Any unsupported fields or categories will throw errors
