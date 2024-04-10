@@ -30,7 +30,7 @@ plugins.get_plugin_by_id("rclinuxedr").install()
 
 ### sigma-cli
 ```bash
-sigma convert -t rclinuxedr proc_creation_lnx_at_command.yml
+sigma convert -t elasticsearch -p rclinuxedr proc_creation_lnx_at_command.yml
 ```
 
 ### pySigma
