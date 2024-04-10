@@ -2,9 +2,9 @@
 ![Coverage Badge](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/7RedViolin/71e0645bb5e484316692e2122f3c2c55/raw/7RedViolin-pySigma-pipeline-rclinuxedr.json)
 ![Status](https://img.shields.io/badge/Status-release-green)
 
-# pySigma RC LinuxEDR Pipeline
+# pySigma Red Canary LinuxEDR Pipeline
 
-This is the RC LinuxEDR pipeline for pySigma. It contains the processing pipeline `sigma.pipelines.rclinuxedr` for field renames and error handling. It is mainly written for the Telemetry Search functionality (Elasticsearch Lucene backend with `default` output) but can also be used to generate DSL queries (Elasticsearch Lucene backend with `dsl_lucene` output).
+This is the Red Canary LinuxEDR pipeline for pySigma. It contains the processing pipeline `sigma.pipelines.rclinuxedr` for field renames and error handling. The following examples use the default Elasticsearch output but this pipeline can be paired with any backend depending on where the LinuxEDR telemetry is being stored (e.g. Elasticsearch, Splunk, OpenSearch, etc.).
 
 This pipeline is currently maintained by:
 
