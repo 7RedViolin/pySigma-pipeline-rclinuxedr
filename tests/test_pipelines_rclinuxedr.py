@@ -30,7 +30,7 @@ def test_rclinuxedr_event_type_mapping(test_backend : TextQueryTestBackend):
         'firewall': 'firewall'
     }
 
-    for k,v in event_types:
+    for k,v in event_types.items():
         assert test_backend.convert(
             SigmaCollection.from_yaml(f"""
                 title: Test
