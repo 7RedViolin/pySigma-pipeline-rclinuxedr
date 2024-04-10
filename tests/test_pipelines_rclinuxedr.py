@@ -23,7 +23,29 @@ def test_rclinuxedr_unsupported_os(test_backend : TextQueryTestBackend):
         """)
     )
 
-def test_rclinuxedr_process_creation_mapping(test_backend : TextQueryTestBackend):
+def test_rclinuxedr_event_type_mapping(test_backend : TextQueryTestBackend):
+    event_types = {
+        'process_creation': 'process_start',
+        'network_connection': 'network_connection',
+        'firewall': 'firewall'
+    }
+
+    for k,v in event_types:
+        assert test_backend.convert(
+            SigmaCollection.from_yaml(f"""
+                title: Test
+                status: test
+                logsource:
+                    category: {k}
+                    product: linux
+                detection:
+                    sel:
+                        Image: process_name_here
+                    condition: sel
+            """)
+        ) == [f'event_type_cd="{v}" and process_name="process_name_here"']
+
+def test_rclinuxedr_generic_mapping(test_backend : TextQueryTestBackend):
     assert test_backend.convert(
         SigmaCollection.from_yaml("""
             title: Test
