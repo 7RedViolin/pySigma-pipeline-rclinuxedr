@@ -19,25 +19,6 @@ class InvalidFieldTransformation(DetectionItemFailureTransformation):
         self.message = f"Invalid SigmaDetectionItem field name encountered: {field_name}. " + self.message
         raise SigmaTransformationError(self.message)
 
-## Custom DetectionItemTransformation to support *IsIPv6 fields, if applicable
-class IsIPv6ValuesTransformation(DetectionItemTransformation):
-    """Custom DetectionItemTransformation to add conditions if one or more *IsIPv6 fields are present
-    Use with field_name_condition for *IsIPv6 field"""
-
-    def apply_detection_item(self, detection_item: SigmaDetectionItem) -> Optional[
-        Union[SigmaDetection, SigmaDetectionItem]]:
-        to_return = []
-        if not isinstance(detection_item.value, list):
-            detection_item.value = [detection_item.value]
-        for d in detection_item.value:
-            if d.to_plain() == 'true':
-                to_return.append(SigmaDetectionItem(field="local_ip_type", modifiers=[], value=[SigmaString("ipv6")]))
-                to_return.append(SigmaDetectionItem(field="remote_ip_type", modifiers=[], value=[SigmaString("ipv6")]))
-            else:
-                to_return.append(SigmaDetectionItem(field="local_ip_type", modifiers=[], value=[SigmaString("ipv4")]))
-                to_return.append(SigmaDetectionItem(field="remote_ip_type", modifiers=[], value=[SigmaString("ipv4")]))
-        return SigmaDetection(detection_items=to_return, item_linking=ConditionOR)
-
 ## Custom DetectionItemTransformation to support Initiated field
 class InitiatedValueTransformation(DetectionItemTransformation):
     """Custom DetectionItemTransformation for Initiated field

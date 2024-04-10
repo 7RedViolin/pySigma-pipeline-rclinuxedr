@@ -27,7 +27,7 @@ def test_rclinuxedr_event_type_mapping(test_backend : TextQueryTestBackend):
     event_types = {
         'process_creation': 'process_start',
         'network_connection': 'network_connection',
-        'firewall': 'firewall'
+        'firewall': 'network_connection'
     }
 
     for k,v in event_types.items():
